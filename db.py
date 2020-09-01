@@ -21,7 +21,7 @@ def new_game(board, sid):
         id = 0
     lastmove = time.time()
     data = (id, board, lastmove, 'r', sid, None)
-    c.execute('''REPLACE INTO games VALUES(?, ?, ?, ?)''', data)
+    c.execute('''REPLACE INTO games VALUES(?, ?, ?, ?, ?, ?)''', data)
     conn.commit()
     conn.close()
     print("Created new game with id {}".format(id))
@@ -32,6 +32,7 @@ def join_game(id, sid):
     conn = sqlite3.connect(database)
     c = conn.cursor()
     c.execute('''UPDATE games SET yellow_sid = ? WHERE id = ?''', (sid, id))
+    conn.commit()
 
 
 def update_game(id, board):
@@ -43,6 +44,26 @@ def update_game(id, board):
     conn.commit()
     conn.close()
     print("Game {} updated".format(id))
+
+
+def get_color_by_sid(id, sid):
+    conn = sqlite3.connect(database)
+    c = conn.cursor()
+    c.execute('''SELECT * FROM games WHERE id = ? AND red_sid = ?''', (id, sid))
+    if len(c.fetchall()) == 0:
+        return 'y'
+    else:
+        return 'r'
+
+
+def get_sid_by_color(id, color):
+    conn = sqlite3.connect(database)
+    c = conn.cursor()
+    if color == 'r':
+        c.execute('''SELECT red_sid FROM games WHERE id = ?''', (id,))
+    else:
+        c.execute('''SELECT yellow_sid FROM games WHERE id = ?''', (id,))
+    return c.fetchone()[0]
 
 
 def get_board(id):

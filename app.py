@@ -17,32 +17,56 @@ def test_connect():
     emit('swag', {'data': 'Swag Moment'})
 
 
-@app.route('/newgame', methods=['POST'])
-def newgame():
-    board = request.json['board']
-    id = db.new_game(board)
-    response = jsonify({'gameid': id})
-    return response, 201
+@socketio.on('newgame')
+def newgame(message):
+    id = db.new_game(str(message['board']), request.sid)
+    emit('gamecreated', {'gameid': id})
 
 
-@app.route('/updategame', methods=['POST'])
-def updategame():
-    id = request.json['id']
-    board = request.json['board']
-    board = json.loads(board)
-    print(board)
-    # db.update_game(id, board)
-    response = jsonify({'gameid': id})
-    return response, 200
+@socketio.on('update')
+def update(message):
+    db.update_game(message['id'], str(message['board']))
+    lastplay = db.get_color_by_sid(message['id'], request.sid)
+    if lastplay == 'r':
+        nextplay = 'y'
+    else:
+        nextplay = 'r'
+    nextsid = db.get_sid_by_color(message['id'], nextplay)
+    emit('opponentmove', {'board': message['board']}, room=nextsid)
+    print(nextsid)
 
 
-@app.route('/getboard', methods=['POST'])
-@cross_origin(origin='*', headers=['Content-Type', 'Authorization'])
-def getboard():
-    id = request.json['id']
-    board = db.get_board(id)
-    response = jsonify({'board': board})
-    return response, 200
+@socketio.on('joingame')
+def joingame(message):
+    db.join_game(message['id'], request.sid)
+
+
+# @app.route('/newgame', methods=['POST'])
+# def newgame():
+#     board = request.json['board']
+#     id = db.new_game(board)
+#     response = jsonify({'gameid': id})
+#     return response, 201
+#
+#
+# @app.route('/updategame', methods=['POST'])
+# def updategame():
+#     id = request.json['id']
+#     board = request.json['board']
+#     board = json.loads(board)
+#     print(board)
+#     # db.update_game(id, board)
+#     response = jsonify({'gameid': id})
+#     return response, 200
+#
+#
+# @app.route('/getboard', methods=['POST'])
+# @cross_origin(origin='*', headers=['Content-Type', 'Authorization'])
+# def getboard():
+#     id = request.json['id']
+#     board = db.get_board(id)
+#     response = jsonify({'board': board})
+#     return response, 200
 
 
 if __name__ == '__main__':
