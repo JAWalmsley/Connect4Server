@@ -1,13 +1,20 @@
 from flask import Flask
 from flask import request
 from flask import jsonify, json
-from flask_cors import CORS
-from flask_cors import cross_origin
+from flask_cors import CORS, cross_origin
+from flask_socketio import SocketIO, emit
 
 import db
 
 app = Flask(__name__)
 CORS(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
+
+
+@socketio.on('connect')
+def test_connect():
+    print('Client Connected')
+    emit('swag', {'data': 'Swag Moment'})
 
 
 @app.route('/newgame', methods=['POST'])
@@ -22,7 +29,9 @@ def newgame():
 def updategame():
     id = request.json['id']
     board = request.json['board']
-    db.update_game(id, board)
+    board = json.loads(board)
+    print(board)
+    # db.update_game(id, board)
     response = jsonify({'gameid': id})
     return response, 200
 
@@ -37,4 +46,5 @@ def getboard():
 
 
 if __name__ == '__main__':
-    app.run()
+    # app.run()
+    socketio.run(app)

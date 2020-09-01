@@ -5,12 +5,13 @@ database = 'games.sqlite'
 
 conn = sqlite3.connect(database)
 c = conn.cursor()
-c.execute('''CREATE TABLE IF NOT EXISTS games(id INTEGER PRIMARY KEY, board TEXT, lastmove REAL, turn TEXT)''')
+c.execute(
+    '''CREATE TABLE IF NOT EXISTS games(id INTEGER PRIMARY KEY, board TEXT, lastmove REAL, turn TEXT, red_sid TEXT, yellow_sid TEXT)''')
 conn.commit()
 conn.close()
 
 
-def new_game(board):
+def new_game(board, sid):
     conn = sqlite3.connect(database)
     c = conn.cursor()
     c.execute('''SELECT MAX(id) FROM games''')
@@ -19,12 +20,18 @@ def new_game(board):
     except TypeError:
         id = 0
     lastmove = time.time()
-    data = (id, board, lastmove, 'r')
+    data = (id, board, lastmove, 'r', sid, None)
     c.execute('''REPLACE INTO games VALUES(?, ?, ?, ?)''', data)
     conn.commit()
     conn.close()
     print("Created new game with id {}".format(id))
     return id
+
+
+def join_game(id, sid):
+    conn = sqlite3.connect(database)
+    c = conn.cursor()
+    c.execute('''UPDATE games SET yellow_sid = ? WHERE id = ?''', (sid, id))
 
 
 def update_game(id, board):
