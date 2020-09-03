@@ -71,3 +71,9 @@ def get_board(id):
     c = conn.cursor()
     c.execute('''SELECT board FROM games WHERE id = ?''', (id,))
     return c.fetchone()[0]
+
+def delete_game(id):
+    conn = sqlite3.connect(database)
+    c = conn.cursor()
+    c.execute('''DELETE FROM games WHERE id = ?''', (id,))
+    conn.commit()

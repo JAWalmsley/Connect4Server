@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Connect 4 Solver - Jack Walmsley</title>
+    <style>
+        canvas {
+            border: 4px solid black;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+<h1 id="winner"></h1>
+<canvas id="canvas" width="700" height="600"></canvas>
+Gameid: <div id="gameid">0</div>
+<script src="https://cdn.jsdelivr.net/npm/socket.io-client@2/dist/socket.io.js"></script>
+<script src="/static/js/draw.js"></script>
+<script src="/static/js/gameState.js"></script>
+<script src="/static/js/helpers.js"></script>
+<script src="/static/js/main.js"></script>
+<input type="number" id="joinid">
+<button onclick="state.joingame(document.getElementById('joinid').value)">Join Game</button>
+</body>
+</html>

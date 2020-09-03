@@ -1,12 +1,11 @@
 from flask import Flask
-from flask import request
-from flask import jsonify, json
-from flask_cors import CORS, cross_origin
+from flask import request, url_for, redirect
+from flask_cors import CORS
 from flask_socketio import SocketIO, emit
 
 import db
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/static', static_folder='static')
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
@@ -14,7 +13,11 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 @socketio.on('connect')
 def test_connect():
     print('Client Connected')
-    emit('swag', {'data': 'Swag Moment'})
+
+
+@socketio.on('disconnect')
+def test_disconnect():
+    print('Client Disconnected')
 
 
 @socketio.on('newgame')
@@ -32,43 +35,31 @@ def update(message):
     else:
         nextplay = 'r'
     nextsid = db.get_sid_by_color(message['id'], nextplay)
-    emit('opponentmove', {'board': message['board']}, room=nextsid)
-    print(nextsid)
+    if nextsid is not None:
+        emit('opponentmove', {'board': message['board']}, room=nextsid)
 
 
 @socketio.on('joingame')
 def joingame(message):
     db.join_game(message['id'], request.sid)
+    db.delete_game(message['oldid'])
 
 
-# @app.route('/newgame', methods=['POST'])
-# def newgame():
-#     board = request.json['board']
-#     id = db.new_game(board)
-#     response = jsonify({'gameid': id})
-#     return response, 201
-#
-#
-# @app.route('/updategame', methods=['POST'])
-# def updategame():
-#     id = request.json['id']
-#     board = request.json['board']
-#     board = json.loads(board)
-#     print(board)
-#     # db.update_game(id, board)
-#     response = jsonify({'gameid': id})
-#     return response, 200
-#
-#
-# @app.route('/getboard', methods=['POST'])
-# @cross_origin(origin='*', headers=['Content-Type', 'Authorization'])
-# def getboard():
-#     id = request.json['id']
-#     board = db.get_board(id)
-#     response = jsonify({'board': board})
-#     return response, 200
+@socketio.on('endgame')
+def endgame(message):
+    db.delete_game(message['id'])
+
+
+@app.route('/')
+def index():
+    return app.send_static_file('index.html')
+
+
+@app.route('/favicon.ico')
+def favicon():
+    return redirect(url_for('static', filename='circle-32.ico'))
 
 
 if __name__ == '__main__':
-    # app.run()
-    socketio.run(app)
+    # app.run(debug=True, host='192.168.2.242', port=5000)
+    socketio.run(app, debug=True, host='0.0.0.0', port=5000)
